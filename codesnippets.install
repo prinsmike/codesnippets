@@ -1,0 +1,99 @@
+<?php
+
+function codesnippets_install() {
+  _codesnippets_install_variables();
+  //_codesnippets_install_permissions();
+  _codesnippets_install_permissions_tmp();
+}
+
+function _codesnippets_install_variables() {
+  variable_set('pathauto_node_codesnippet_pattern', 'codesnippet/[node:title]');
+}
+
+/**
+ * Removing the standard permissions setup function
+ * until http://drupal.org/node/1265168 gets fixed.
+ * see _codesnippets_install_permissions_tmp() for 
+ * a temporary workaround.
+ *
+ *
+function _codesnippets_install_permissions() {
+  $manager_role = user_role_load_by_name('Manager');
+  $admin_role = user_role_load_by_name('Administrator');
+
+  $admin_perms = array(
+    'create codesnippet content',
+    'edit own codesnippet content',
+    'edit any codesnippet content',
+    'delete own codesnippet content',
+    'delete any codesnippet content',
+  );
+  $user_perms = array(
+    'create codesnippet content',
+    'edit own codesnippet content',
+    'delete own codesnippet content',
+  );
+  user_role_grant_permissions($manager_role->rid, $admin_perms);
+  user_role_grant_permissions($admin_role->rid, $admin_perms);
+  user_role_grant_permissions(DRUPAL_AUTHENTICATED_RID, $user_perms);
+}
+ * 
+ */
+
+function _codesnippets_install_permissions_tmp() {
+  $roles['manager'] = user_role_load_by_name('Manager');
+  $roles['admin'] = user_role_load_by_name('Administrator');
+  
+  $admin_perms = array(
+    'create codesnippet content',
+    'edit own codesnippet content',
+    'edit any codesnippet content',
+    'delete own codesnippet content',
+    'delete any codesnippet content',
+  );
+  $user_perms = array(
+    'create codesnippet content',
+    'edit own codesnippet content',
+    'delete own codesnippet content',
+  );
+  
+  // Setup administrator and manager roles permissions.
+  foreach ($roles as $role) {
+    foreach ($admin_perms as $permission) {
+      $result = db_select('role_permission', 'p')
+          ->fields('p', array('permission'))
+              ->condition('permission', $permission, '=')
+              ->condition('rid', $role->rid, '=')
+              ->execute()
+              ->fetchAssoc();
+      if (!$result) {
+        db_insert('role_permission')
+        ->fields(array(
+          'rid' => $role->rid,
+          'permission' => $permission,
+          'module' => 'node',
+        ))
+        ->execute();
+      }
+    }
+  }
+  
+  // Setup authenticated role permissions.
+  foreach ($user_perms as $permission) {
+    $result = db_select('role_permission', 'p')
+          ->fields('p', array('permission'))
+              ->condition('permission', $permission, '=')
+              ->condition('rid', DRUPAL_AUTHENTICATED_RID, '=')
+              ->execute()
+              ->fetchAssoc();
+    if (!$result) {
+        db_insert('role_permission')
+        ->fields(array(
+          'rid' => DRUPAL_AUTHENTICATED_RID,
+          'permission' => $permission,
+          'module' => 'node',
+        ))
+        ->execute();
+      }
+  }
+}

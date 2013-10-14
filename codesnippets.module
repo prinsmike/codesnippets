@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Code snippets feature.
+ */
+
+include_once('codesnippets.features.inc');
